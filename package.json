@@ -1,0 +1,22 @@
+{
+    "name": "arcaus",
+    "version": "1.0.0",
+    "description": "A multi-game station",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node server.js"
+    },
+    "repository": { "url": "https://github.com/Ottegi/Arcaus.git" },
+    "author": "Ottegi",
+    "license": "MIT",
+    "dependencies": {
+        "@outwalk/skylark": "^0.2.1",
+        "bcrypt": "^4.0.1",
+        "express": "^4.17.1",
+        "jolt": "^1.1.0",
+        "mongod": "^2.0.0",
+        "mongodb": "^3.5.5",
+        "ws": "^7.2.3"
+    }
+}
