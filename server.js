@@ -7,20 +7,22 @@ var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://localhost:27017/";
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+var bodyParser = require('body-parser');
 
 app.use(express.static(path.join(__dirname, "/public")));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "public/index.html"));
 });
 
-const server = app.listen(port, () => {
+app.listen(port, () => {
     console.log(`Server is now listening at ${port}`);
 });
 
-const wss = new WSS({ server: server });
+const wss = new WSS({ port: 59072 });
 
-const clients = {};
 const players = {};
 
 MongoClient.connect(url, function(err, db) {
@@ -29,14 +31,22 @@ MongoClient.connect(url, function(err, db) {
     db = db.db("arcaus");
     let playerDB = db.collection("players");
 
+    app.post("/login", (req, res) => {
+        connect(playerDB, req.body.email, req.body.password, (response) => {
+            if (response.status == "ok") {
+                res.status(201).send({
+                    socket: "ws://localhost:59072"
+                });
+            } else {
+                res.status(401).send({
+                    "reason": "Invalid Credentials"
+                })
+            }
+        })
+    })
+
     wss.on("connection", (ws) => {
-
-        ws.on("open", () => {
-            ws.id = Math.floor(Math.random() * 999999999);
-
-            clients[ws.id] = ws;
-        });
-
+        ws.id = Math.floor(Math.random() * 999999999);
         ws.on("message", (data) => {
             data = JSON.parse(data);
             switch (data.type) {
@@ -48,6 +58,21 @@ MongoClient.connect(url, function(err, db) {
                                 "login": true,
                                 "message": response.message
                             });
+
+                            send(ws, {
+                                type: "setID",
+                                id: ws.id
+                            });
+
+                            getPlayer(playerDB, { email: data.email }, (data) => {
+                                players[ws.id] = data;
+                                players[ws.id].id = ws.id;
+                                players[ws.id].x = 0;
+                                players[ws.id].y = 0;
+                                players[ws.id].ws = ws;
+                                players[ws.id].ready = false;
+                            });
+
                         } else {
                             send(ws, {
                                 "type": "status",
@@ -57,12 +82,37 @@ MongoClient.connect(url, function(err, db) {
                         }
                     });
                     break;
+
+                case "loadPlayers":
+                    players[ws.id].ready = true;
+                    sendAll({
+                        type: "setPlayers",
+                        players: players
+                    })
+                    break;
+
+                case "move":
+                    players[ws.id].x = data.pos.x;
+                    players[ws.id].y = data.pos.y;
+                    sendAll({
+                        type: "updatePlayer",
+                        player: {
+                            id: ws.id,
+                            x: data.pos.x,
+                            y: data.pos.y
+                        }
+                    });
+
+                    break;
             }
         });
 
         ws.on("close", () => {
-            delete clients[ws.id];
             delete players[ws.id];
+            sendAll({
+                type: "updatePlayers",
+                players: players
+            })
         });
     });
 });
@@ -115,6 +165,12 @@ function send(ws, data) {
     ws.send(JSON.stringify(data));
 }
 
+function sendAll(data) {
+    for (let i in players) {
+        send(players[i].ws, data);
+    }
+}
+
 function insert(db, data) {
     db.insertOne(data, () => {});
 }
@@ -142,4 +198,14 @@ function CheckPassword(db, user, callback) {
             callback(err, false);
         }
     });
+}
+
+function getPlayer(db, query, callback) {
+    find(db, query, (err, data) => {
+        if (err) throw err;
+        if (data != null) {
+            delete data.password;
+            callback(data);
+        }
+    })
 }
