@@ -6,6 +6,7 @@ export class Player extends Renderable {
 
         this.x = x;
         this.y = y;
+        super.setPosition(x, y);
         this.rect = new Rectangle(x, y, width, height);
 
         this.width = width;
