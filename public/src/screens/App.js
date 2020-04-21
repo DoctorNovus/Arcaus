@@ -1,16 +1,16 @@
-import { View } from "jolt";
+import { View, Component } from "jolt";
+import { LoginScreen } from "./LoginScreen";
+import { ChatWindow } from "./ChatWindow";
+
+Component.register("login-screen", LoginScreen);
+Component.register("chat-window", ChatWindow);
 
 export class App extends View {
 
-    constructor(container) {
-        super(container);
-
-        this.state.set({
-            screen: `<login-screen state=${this.state}></login-screen>`
-        });
-    }
-
     render() {
-        return `${this.state.screen}`;
+        return `
+            <login-screen id="loginScreen"></login-screen>
+            <chat-window id="chatBox"></chat-window>
+        `;
     }
 }

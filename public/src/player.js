@@ -11,6 +11,13 @@ export class Player extends Renderable {
 
         this.width = width;
         this.height = height;
+
+        this.direction = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
     }
 
     setAnimation(animation) {

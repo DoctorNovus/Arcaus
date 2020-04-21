@@ -12,6 +12,7 @@
     "author": "Ottegi",
     "license": "MIT",
     "dependencies": {
+        "@outwalk/sable": "^1.2.3",
         "@outwalk/skylark": "^0.2.1",
         "bcrypt": "^4.0.1",
         "body-parser": "^1.19.0",
@@ -19,7 +20,7 @@
         "express": "^4.17.1",
         "jolt": "^2.0.0",
         "mongod": "^2.0.0",
-        "mongodb": "^3.5.5",
+        "mongodb": "^3.5.6",
         "nodemailer": "^6.4.6",
         "ws": "^7.2.3"
     }

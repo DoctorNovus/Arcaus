@@ -1,409 +1,390 @@
 "use strict";
 
-function e(e) {
+function _interopDefault(e) {
     return e && "object" == typeof e && "default" in e ? e.default : e;
 }
 
-var t = e(require("./node_modules/express")),
-    s = e(require("path")),
-    n = require("./node_modules/ws"),
-    o = require("./node_modules/mongodb"),
-    r = e(require("./node_modules/bcrypt")),
-    a = e(require("./node_modules/body-parser")),
-    i = e(require("fs")),
-    l = e(require("./node_modules/bson")),
-    u = e(require("./node_modules/nodemailer"));
+var e = _interopDefault(require("express")), a = _interopDefault(require("path")), t = _interopDefault(require("body-parser")), s = _interopDefault(require("fs")), r = _interopDefault(require("bson")), o = require("ws"), n = require("mongodb"), l = _interopDefault(require("bcrypt")), i = _interopDefault(require("nodemailer"));
+
+class DataGenerator {
+    static generateID(e) {
+        return Math.floor(Math.random() * e);
+    }
+    /**
+     * Returns a random token segment
+     */    static generateRandomText() {
+        return Math.random().toString(36).substr(2);
+ // remove `0.`
+        }
+    /**
+     * Returns a full token
+     */
+    static generateToken() {
+        return DataGenerator.generateRandomText() + DataGenerator.generateRandomText();
+ // to make it longer
+        }
+}
+
+class Socket extends o.Server {
+    constructor(e) {
+        super(e);
+    }
+    /**
+     * Send data to a websocket
+     * @param {WebSocket} ws socket you want to send to
+     * @param {Object} data JSON that you want to send
+     */    static send(e, a) {
+        e.send(JSON.stringify(a));
+    }
+    /**
+     * Sends data to all connected players
+     * @param {Object} data JSON you want to send
+     */    static sendAll(e) {
+        for (let a in players) Socket.send(players[a].ws, e);
+    }
+}
+
+class Security {
+    /**
+     * Uses bcrypt to hash and salt data
+     * @param {String} password password to encrypt
+     * @param {Function} callback what to do afterwards
+     */
+    static EncryptPassword(e, a) {
+        l.hash(e, 10, (e, t) => {
+            a(e, t);
+        });
+    }
+    /**
+     * Checks if the password is correct
+     * @param {} db collection to check
+     * @param {Object} user user to check
+     * @param {Function} callback what to do afterwards
+     */    static CheckPassword(e, a, t) {
+        DatabaseManager.find(e, {
+            email: a.email
+        }, (e, s) => {
+            if (e) throw e;
+            null != s ? l.compare(a.password, s.password, (e, a) => {
+                t(e, a);
+            }) : t(e, !1);
+        });
+    }
+}
+
+const c = i.createTransport({
+    service: "gmail",
+    auth: {
+        user: "arcausgame@gmail.com",
+        pass: "nviwqhceqxufwona"
+    }
+});
+
+class DatabaseManager extends n.MongoClient {
+    static connectToDB(e, a, t, s) {
+        super.connect(e, (e, r) => {
+            if (e) throw e;
+            let o = (r = r.db(a)).collection(t);
+            s(o);
+        });
+    }
+    /**
+     * 
+     * @param {} db database that you want to check
+     * @param {String} email email that you are checking
+     * @param {String} password password that you are checking
+     * @param {Function{ callback non-syncronous callback for after the database is checked
+     */    static connectToGame(e, a, t, s) {
+        // Makes sure there are no spaces
+        a = a.trim().split(" ").join("");
+        let r = {
+            status: "",
+            message: ""
+        };
+        /**
+         * Checks if the accoutn exists, then breaks down into the following format:
+         * if email:
+         * - if pass is correct, make sure account is verified, else say it is not
+         * else:
+         * - create the account, and send a verification email
+         */        DatabaseManager.find(e, {
+            email: a
+        }, (o, n) => {
+            if (o) throw o;
+            null != n ? Security.CheckPassword(e, {
+                email: a,
+                password: t
+            }, (e, a) => {
+                if (e) throw e;
+                n.verified ? a ? (r.status = "ok", r.message = "Logged in successfully!", s(r)) : (r.status = "Error", 
+                r.message = "Incorrect credentials.", s(r)) : (r.status = "Error", r.message = "Account not verified", 
+                s(r));
+            }) : 
+            // Makes sure it is a valid email
+            a.includes("@") && a.includes(".") ? Security.EncryptPassword(t, (t, o) => {
+                let n = DataGenerator.generateToken();
+                if (t) throw t;
+                /**
+                         * Creates a simple human into the database
+                         */                DatabaseManager.insert(e, {
+                    email: a,
+                    password: o,
+                    inventory: {
+                        cobble: 0
+                    },
+                    token: n,
+                    username: null,
+                    verified: !1
+                });
+                // Sends verification
+                var l = {
+                    from: "arcausgame@gmail.com",
+                    to: a,
+                    subject: "Arcaus Game Verification",
+                    text: `\n                        Welcome to Arcaus! Before you can login, we are going to need you to login.\n                        Please verify your account using the following link:\n                        http://localhost:3000/verify/${n}\n                        `
+                };
+                c.sendMail(l, (function(e, a) {
+                    e && console.log(e);
+                })), r.status = "Error", r.message = "Account created! Welcome to the game! Please verify your account and try again", 
+                s(r);
+            }) : (r.status = "Error", r.message = "Invalid email structure", s(r));
+        });
+    }
+    /**
+     * Inserts into a collection certain JSON data
+     * @param {} db database you want to insert into
+     * @param {*} data JSON to insert into the database
+     */    static insert(e, a) {
+        e.insertOne(a, () => {});
+    }
+    /**
+     * Query what you need to find in a collection
+     * @param {} db database you want to find info from
+     * @param {Object} data JSON data to find
+     * @param {Function} callback what to do after you find data, if you do
+     */    static find(e, a, t) {
+        e.findOne(a, (e, a) => {
+            t(e, a);
+        });
+    }
+    static update(e, a, t) {
+        e.updateOne(a, {
+            $set: t
+        }, () => {});
+    }
+}
+
+class Messenger {
+    /**
+     * Checks if the player email and pass are valid, and if so, send them the server
+     */
+    static login(e, a) {
+        e.post("/login", (e, t) => {
+            DatabaseManager.connectToGame(a, e.body.email, e.body.password, e => {
+                "ok" == e.status ? t.status(201).send({
+                    socket: "ws://localhost:59072"
+                }) : t.status(401).send({
+                    reason: e.statusMessage
+                });
+            });
+        });
+    }
+    /**
+     * Token verification system that is given from email
+     */    static verify(e, a) {
+        e.post("/verify", (e, t) => {
+            DatabaseManager.find(a, {
+                token: e.body.token
+            }, (t, s) => {
+                if (t) throw t;
+                if (null != s) {
+                    s.verified = !0, DatabaseManager.update(a, {
+                        token: e.body.token
+                    }, {
+                        verified: !0
+                    });
+                }
+            });
+        });
+    }
+}
+
+class PlayerManager {
+    /**
+     * Returns a player from the database, but strips password for security purposes
+     * @param {} db collection to check
+     * @param {Object} query JSON query to find
+     * @param {Function} callback what to do afterwards
+     */
+    static getPlayer(e, a, t) {
+        DatabaseManager.find(e, a, (e, a) => {
+            if (e) throw e;
+            null != a ? (delete a.password, t(a)) : t(a);
+        });
+    }
+    static setDefaultPlayer(e, a, t, s) {
+        PlayerManager.getPlayer(e, {
+            email: a.email
+        }, e => {
+            players[t.id] = e, players[t.id].id = t.id, players[t.id].x = 0, players[t.id].y = 0, 
+            players[t.id].ws = t, players[t.id].ready = !1, Socket.send(t, {
+                type: "status",
+                login: !0,
+                message: s.message
+            }), Socket.send(t, {
+                type: "setID",
+                id: t.id
+            }), Socket.send(t, {
+                type: "setWorld",
+                world: worlds.start
+            }), null == e.username ? 
+            /**
+                 * Sends the html code for the user to enter a username
+                 * 
+                 * Needs fixing for unique usernames
+                 */
+            setTimeout(() => {
+                Socket.send(t, {
+                    type: "setUsername",
+                    html: '\n                        <form id="usernameSet" class="centeredForm">\n                            <input id="username" placeholder="Input your username">\n                            <button type="submit">Submit</button>\n                        </form>\n                    '
+                }, 1e3);
+            }) : players[t.id].username = e.username;
+        });
+    }
+}
+
+class SocketSwitch {
+    constructor() {}
+    static connect(e, a, t) {
+        DatabaseManager.connectToGame(e, a.email, a.password, s => {
+            "ok" == s.status ? PlayerManager.setDefaultPlayer(e, a, t, s) : Socket.send(t, {
+                type: "status",
+                login: !1,
+                message: s.message
+            });
+        });
+    }
+    static loadPlayers(e) {
+        players[e.id].ready = !0, Socket.sendAll({
+            type: "setPlayers",
+            players
+        });
+    }
+    static movePlayer(e, a) {
+        players[e.id].x = a.pos.x, players[e.id].y = a.pos.y, Socket.sendAll({
+            type: "updatePlayer",
+            player: {
+                id: e.id,
+                x: a.pos.x,
+                y: a.pos.y
+            }
+        });
+    }
+    static loadWorld(e, a, t) {
+        t[a.world] ? Socket.send(e, {
+            type: "setWorld",
+            world: t[a.world]
+        }) : Socket.send(e, {
+            type: "setWorld",
+            world: createWorld(a.world)
+        });
+    }
+    static sendMessage(e, a) {
+        Socket.sendAll({
+            type: "chatMessage",
+            message: `${players[e.id].username}: ${a.message}`
+        });
+    }
+    static setUsername(e, a, t) {
+        DatabaseManager.update(t, {
+            email: players[e.id].email
+        }, {
+            username: a.user
+        }), players[e.id].username = a.user;
+    }
+}
 
 /* imports */
 /**
  * Website server
  * Mail server
- */
-const d = t(),
-    c = process.argv[2] || 3e3,
-    m = u.createTransport({
-        service: "gmail",
-        auth: {
-            user: "arcausgame@gmail.com",
-            pass: "nviwqhceqxufwona"
-        }
-    });
+ */ const d = e(), u = process.argv[2] || 3e3;
 
-d.use(t.static(s.join(__dirname, "/public"))), d.use(a.json()), d.use(a.urlencoded({
+d.use(e.static(a.join(__dirname, "/public"))), d.use(t.json()), d.use(t.urlencoded({
     extended: !0
 })), d.get("*", (e, t) => {
-    t.sendFile(s.resolve(__dirname, "public/index.html"));
-}), d.listen(c, () => {
-    console.log(`Server is now listening at ${c}`);
+    t.sendFile(a.resolve(__dirname, "public/index.html"));
+}), d.listen(u, () => {
+    console.log("Server is now listening at " + u);
 });
 
-const p = new n.Server({
-        port: 59072
-    }),
-    f = {};
+const y = new Socket({
+    port: 59072
+});
 
 // Variables for the server
-let y = {};
+global.players = {}, global.worlds = {};
 
-// Settings HTML
 // Loads our worlds
-for (let e of i.readdirSync("worlds")) {
-    let t = l.deserialize(i.readFileSync(`worlds/${e}`), "utf-8");
-    y[e.substr(0, e.length - 5)] = t;
+for (let e of s.readdirSync("worlds")) {
+    let a = r.deserialize(s.readFileSync("worlds/" + e), "utf-8");
+    worlds[e.substr(0, e.length - 5)] = a;
 }
 
-/**
- * 
- * @param {MongoDB collection} db database that you want to check
- * @param {String} email email that you are checking
- * @param {String} password password that you are checking
- * @param {callback} callback non-syncronous callback for after the database is checked
- */
-function g(e, t, s, n) {
-    // Makes sure there are no spaces
-    t = t.trim().split(" ").join("");
-    let o = {
-        status: "",
-        message: ""
-    };
-    /**
-     * Checks if the accoutn exists, then breaks down into the following format:
-     * if email:
-     * - if pass is correct, make sure account is verified, else say it is not
-     * else:
-     * - create the account, and send a verification email
-     */
-    b(e, {
-        email: t
-    }, (a, i) => {
-        if (a) throw a;
-        null != i ?
-            /**
-             * Checks if the password is correct
-             * @param {MongoDB collection} db collection to check
-             * @param {JSON} user user to check
-             * @param {CallableFunction} callback what to do afterwards
-             */
-            function(e, t, s) {
-                b(e, {
-                    email: t.email
-                }, (e, n) => {
-                    if (e) throw e;
-                    null != n ? r.compare(t.password, n.password, (function(e, t) {
-                        s(e, t);
-                    })) : s(e, !1);
-                });
+DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e => {
+    Messenger.login(d, e), Messenger.verify(d, e), y.on("connection", a => {
+        a.id = DataGenerator.generateID(99999999999), a.onmessage = t => {
+            switch ((t = JSON.parse(t.data)).type) {
+              /**
+                 * Connects the player so taht we may load them and collect their data
+                 */
+                case "connect":
+                /**
+                     * Checks the player connection database, and returns a status
+                     */
+                SocketSwitch.connect(e, t, a);
+                break;
+
+                /**
+                     * When user joins a world, load the players in it
+                     * 
+                     * Needs to be updated once the world update is out
+                     */              case "loadPlayers":
+                SocketSwitch.loadPlayers(a);
+                break;
+
+                /**
+                     * When the player moves, send an update for that player to all clients in the game
+                     */              case "move":
+                SocketSwitch.movePlayer(a, t);
+                break;
+
+                /**
+                     * Load the world that the player wants, used for future purposes
+                     */              case "loadWorld":
+                SocketSwitch.loadWorld(a, t, worlds);
+                break;
+
+                /**
+                     * On a chat message, send it to all players with the user's username
+                     */              case "chatMessage":
+                SocketSwitch.sendMessage(a, t);
+                break;
+
+                /**
+                     * When the user has no username, it is set here so that they may have one
+                     */              case "setUser":
+                SocketSwitch.setUsername(a, t, e);
             }
-            /**
-             * Returns a player from the database, but strips password for security purposes
-             * @param {MongoDB collection} db collection to check
-             * @param {JSON} query JSON query to find
-             * @param {CallableFunction} callback what to do afterwards
-             */
-            (e, {
-                email: t,
-                password: s
-            }, (e, t) => {
-                if (e) throw e;
-                i.verified ? t ? (o.status = "ok", o.message = "Logged in successfully!", n(o)) : (o.status = "Error",
-                    o.message = "Incorrect credentials.", n(o)) : (o.status = "Error", o.message = "Account not verified",
-                    n(o));
-            }) :
-            // Makes sure it is a valid email
-            t.includes("@") && t.includes(".") ?
-            /**
-             * Uses bcrypt to hash and salt data
-             * @param {String} password password to encrypt
-             * @param {CallableFunction} callback what to do afterwards
-             */
-            function(e, t) {
-                r.hash(e, 10, (function(e, s) {
-                    t(e, s);
-                }));
-            }(s, (s, r) => {
-                let a = k() + k();
-                if (s) throw s;
-                /**
-                 * Creates a simple human into the database
-                 */
-                !
-                /**
-                 * Inserts into a collection certain JSON data
-                 * @param {MongoDB collection} db database you want to insert into
-                 * @param {*} data JSON to insert into the database
-                 */
-                function(e, t) {
-                    e.insertOne(t, () => {});
-                }
-                /**
-                 * Query what you need to find in a collection
-                 * @param {MongoDB collection} db database you want to find info from
-                 * @param {JSON} data JSON data to find
-                 * @param {CallableFunction} callback what to do after you find data, if you do
-                 */
-                (e, {
-                    email: t,
-                    password: r,
-                    inventory: {
-                        cobble: 0
-                    },
-                    token: a,
-                    username: null,
-                    verified: !1
-                });
-                // Sends verification
-                var i = {
-                    from: "arcausgame@gmail.com",
-                    to: t,
-                    subject: "Arcaus Game Verification",
-                    text: `\n                        Welcome to Arcaus! Before you can login, we are going to need you to login.\n                        Please verify your account using the following link:\n                        http://localhost:3000/verify/${a}\n                        `
-                };
-                m.sendMail(i, (function(e, t) {
-                        e && console.log(e);
-                    })), o.status = "Error", o.message = "Account created! Welcome to the game! Please verify your account and try again",
-                    n(o);
-            }) : (o.status = "Error", o.message = "Invalid email structure", n(o));
-    });
-}
-
-/**
- * Send data to a websocket
- * @param {WebSocket} ws socket you want to send to
- * @param {JSON} data JSON that you want to send
- */
-function w(e, t) {
-    e.send(JSON.stringify(t));
-}
-
-/**
- * Sends data to all connected players
- * @param {JSON} data JSON you want to send
- */
-function h(e) {
-    for (let t in f) w(f[t].ws, e);
-}
-
-function b(e, t, s) {
-    e.findOne(t, (e, t) => {
-        s(e, t);
-    });
-}
-
-/**
- * Creates a world with inputted text
- * @param {String} name name of the world
- */
-function v(e) {
-    let t = {
-        name: e,
-        owner: null
-    };
-    t.map =
+        }, 
         /**
-         * Creates a map as a blank state for a world
+         * When the player leaves, remove them from the game
          */
-        function() {
-            let e = [];
-            for (let t = 0; t < 10; t++)
-                for (let s = 0; s < 10; s++) e.push({
-                    tile: "cobble",
-                    type: "backdrop",
-                    x: 96 * t,
-                    y: 96 * s
-                });
-            return e;
-        }
-        /**
-         * Returns a random token segment
-         */
-        (), y[e] = t, i.writeFileSync(`worlds/${e}.json`, l.serialize(t));
-}
-
-function k() {
-    return Math.random().toString(36).substr(2);
-    // remove `0.`
-}
-
-/**
- * Returns a full token
- */
-o.MongoClient.connect("mongodb://localhost:27017/", (function(e, t) {
-    if (e) throw e;
-    let s = (t = t.db("arcaus")).collection("players");
-    /**
-     * Checks if the player email and pass are valid, and if so, send them the server
-     */
-    d.post("/login", (e, t) => {
-            g(s, e.body.email, e.body.password, e => {
-                "ok" == e.status ? t.status(201).send({
-                    socket: "ws://localhost:59072"
-                }) : t.status(401).send({
-                    reason: e.message
-                });
+        a.onclose = e => {
+            delete players[a.id], Socket.sendAll({
+                type: "setPlayers",
+                players
             });
-        }),
-        /**
-         * Token verification system that is given from email
-         */
-        d.post("/verify", (e, t) => {
-            b(s, {
-                token: e.body.token
-            }, (t, n) => {
-                if (t) throw t;
-                if (null != n) {
-                    n.verified = !0, s.updateOne({
-                        token: e.body.token
-                    }, {
-                        $set: {
-                            verified: !0
-                        }
-                    }, () => {});
-                }
-            });
-        }), p.on("connection", e => {
-            // Generates player websocket id
-            e.id = Math.floor(999999999 * Math.random()), e.on("message", t => {
-                    switch ((t = JSON.parse(t)).type) {
-                        /**
-                         * Connects the player so taht we may load them and collect their data
-                         */
-                        case "connect":
-                            /**
-                             * Checks the player connection database, and returns a status
-                             */
-                            g(s, t.email, t.password, n => {
-                                "ok" == n.status ? (w(e, {
-                                        type: "status",
-                                        login: !0,
-                                        message: n.message
-                                    }),
-                                    // Sets player id for their updating later
-                                    w(e, {
-                                        type: "setID",
-                                        id: e.id
-                                    }),
-                                    /**
-                                     * Sets our player into the game, and makes sure they have a username
-                                     */
-                                    function(e, t, s) {
-                                        b(e, t, (e, t) => {
-                                            if (e) throw e;
-                                            null != t && (delete t.password, s(t));
-                                        });
-                                    }(s, {
-                                        email: t.email
-                                    }, t => {
-                                        f[e.id] = t, f[e.id].id = e.id, f[e.id].x = 0, f[e.id].y = 0, f[e.id].ws = e, f[e.id].ready = !1,
-                                            null == t.username ?
-                                            /**
-                                             * Sends the html code for the user to enter a username
-                                             * 
-                                             * Needs fixing for unique usernames
-                                             */
-                                            setTimeout(() => {
-                                                w(e, {
-                                                    type: "setUsername",
-                                                    html: '\n                                            <form id="usernameSet" class="centeredForm">\n                                                <input id="username" placeholder="Input your username">\n                                                <button type="submit">Submit</button>\n                                            </form>\n                                        '
-                                                });
-                                            }) : f[e.id].username = t.username;
-                                    })) : w(e, {
-                                    type: "status",
-                                    login: !1,
-                                    message: n.message
-                                });
-                            });
-                            break;
-
-                            /**
-                             * When user joins a world, load the players in it
-                             * 
-                             * Needs to be updated once the world update is out
-                             */
-                        case "loadPlayers":
-                            f[e.id].ready = !0, h({
-                                type: "setPlayers",
-                                players: f
-                            });
-                            break;
-
-                            /**
-                             * When the player moves, send an update for that player to all clients in the game
-                             */
-                        case "move":
-                            f[e.id].x = t.pos.x, f[e.id].y = t.pos.y, h({
-                                type: "updatePlayer",
-                                player: {
-                                    id: e.id,
-                                    x: t.pos.x,
-                                    y: t.pos.y
-                                }
-                            });
-                            break;
-
-                            /**
-                             * Load the world that the player wants, used for future purposes
-                             */
-                        case "loadWorld":
-                            y[t.world] ? w(e, {
-                                type: "setWorld",
-                                world: y[t.world]
-                            }) : w(e, {
-                                type: "setWorld",
-                                world: v(t.world)
-                            });
-                            break;
-
-                            /**
-                             * On a chat message, send it to all players with the user's username
-                             */
-                        case "chatMessage":
-                            h({
-                                type: "chatMessage",
-                                message: `${f[e.id].username}: ${t.message}`
-                            });
-                            break;
-
-                            /**
-                             * When the user has no username, it is set here so that they may have one
-                             */
-                        case "setUser":
-                            s.updateOne({
-                                email: f[e.id].email
-                            }, {
-                                $set: {
-                                    username: t.user
-                                }
-                            }, () => {}), f[e.id].username = t.user;
-                            break;
-
-                            /**
-                             * When settings are requested, send setting html
-                             */
-                        case "loadSettings":
-                            w(e, {
-                                type: "settingScreen",
-                                html: '\n    <div class="menu">\n        <h3 id="modifySettings"> Settings </h3>\n        <h3 id="switchWorld"> Switch World </h3>\n    </div>\n'
-                            });
-                            break;
-
-                            /**
-                             * When worlds are requested, send the code
-                             */
-                        case "loadWorlds":
-                            w(e, {
-                                type: "worldMenu",
-                                html: '\n    <form class="menu">\n        <input id="worldSelect" placeholder=" Input world name " />\n        <button type="submit">Join</button>\n    </form>\n'
-                            });
-                    }
-                }),
-                /**
-                 * When the player leaves, remove them from the game
-                 */
-                e.on("close", () => {
-                    delete f[e.id], h({
-                        type: "setPlayers",
-                        players: f
-                    });
-                });
-        });
-}));
+        };
+    });
+});
