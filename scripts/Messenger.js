@@ -13,7 +13,7 @@ export class Messenger {
                     });
                 } else {
                     res.status(401).send({
-                        reason: response.statusMessage
+                        reason: response.message
                     })
                 }
             })
@@ -25,17 +25,26 @@ export class Messenger {
      */
     static verify(app, db) {
         app.post("/verify", (req, res) => {
-            DatabaseManager.find(db, { token: req.body.token }, (err, data) => {
+            DatabaseManager.find(db, { token: req.body.token }, (err, data1) => {
                 if (err) throw err;
-                if (data != null) {
-                    let newData = data;
-                    newData.verified = true;
-
-                    DatabaseManager.update(db, {
-                        token: req.body.token
-                    }, {
-                        verified: true
-                    });
+                if (data1 != null) {
+                    DatabaseManager.find(db, { username: req.body.username }, (err, data) => {
+                        if (data == null) {
+                            if (data1.verified == false) {
+                                DatabaseManager.update(db, {
+                                    token: req.body.token
+                                }, {
+                                    verified: true,
+                                    username: req.body.username
+                                });
+                                res.send({ status: "This username has been set" })
+                            } else {
+                                res.send({ status: "This account is already verified" });
+                            }
+                        } else {
+                            res.send({ status: "This username is taken." });
+                        }
+                    })
                 } else {}
             })
         })

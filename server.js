@@ -4,7 +4,7 @@ function _interopDefault(e) {
     return e && "object" == typeof e && "default" in e ? e.default : e;
 }
 
-var e = _interopDefault(require("express")), a = _interopDefault(require("path")), t = _interopDefault(require("body-parser")), s = _interopDefault(require("fs")), r = _interopDefault(require("bson")), o = require("ws"), n = require("mongodb"), l = _interopDefault(require("bcrypt")), i = _interopDefault(require("nodemailer"));
+var e = _interopDefault(require("express")), a = _interopDefault(require("path")), s = _interopDefault(require("body-parser")), t = _interopDefault(require("fs")), r = _interopDefault(require("bson")), o = require("ws"), n = require("mongodb"), l = _interopDefault(require("bcrypt")), i = _interopDefault(require("nodemailer"));
 
 class DataGenerator {
     static generateID(e) {
@@ -51,8 +51,8 @@ class Security {
      * @param {Function} callback what to do afterwards
      */
     static EncryptPassword(e, a) {
-        l.hash(e, 10, (e, t) => {
-            a(e, t);
+        l.hash(e, 10, (e, s) => {
+            a(e, s);
         });
     }
     /**
@@ -60,14 +60,14 @@ class Security {
      * @param {} db collection to check
      * @param {Object} user user to check
      * @param {Function} callback what to do afterwards
-     */    static CheckPassword(e, a, t) {
+     */    static CheckPassword(e, a, s) {
         DatabaseManager.find(e, {
             email: a.email
-        }, (e, s) => {
+        }, (e, t) => {
             if (e) throw e;
-            null != s ? l.compare(a.password, s.password, (e, a) => {
-                t(e, a);
-            }) : t(e, !1);
+            null != t ? l.compare(a.password, t.password, (e, a) => {
+                s(e, a);
+            }) : s(e, !1);
         });
     }
 }
@@ -81,11 +81,11 @@ const c = i.createTransport({
 });
 
 class DatabaseManager extends n.MongoClient {
-    static connectToDB(e, a, t, s) {
+    static connectToDB(e, a, s, t) {
         super.connect(e, (e, r) => {
             if (e) throw e;
-            let o = (r = r.db(a)).collection(t);
-            s(o);
+            let o = (r = r.db(a)).collection(s);
+            t(o);
         });
     }
     /**
@@ -94,7 +94,7 @@ class DatabaseManager extends n.MongoClient {
      * @param {String} email email that you are checking
      * @param {String} password password that you are checking
      * @param {Function{ callback non-syncronous callback for after the database is checked
-     */    static connectToGame(e, a, t, s) {
+     */    static connectToGame(e, a, s, t) {
         // Makes sure there are no spaces
         a = a.trim().split(" ").join("");
         let r = {
@@ -113,17 +113,17 @@ class DatabaseManager extends n.MongoClient {
             if (o) throw o;
             null != n ? Security.CheckPassword(e, {
                 email: a,
-                password: t
+                password: s
             }, (e, a) => {
                 if (e) throw e;
-                n.verified ? a ? (r.status = "ok", r.message = "Logged in successfully!", s(r)) : (r.status = "Error", 
-                r.message = "Incorrect credentials.", s(r)) : (r.status = "Error", r.message = "Account not verified", 
-                s(r));
+                n.verified ? a ? (r.status = "ok", r.message = "Logged in successfully!", t(r)) : (r.status = "Error", 
+                r.message = "Incorrect credentials.", t(r)) : (r.status = "Error", r.message = "Account not verified", 
+                t(r));
             }) : 
             // Makes sure it is a valid email
-            a.includes("@") && a.includes(".") ? Security.EncryptPassword(t, (t, o) => {
+            a.includes("@") && a.includes(".") ? Security.EncryptPassword(s, (s, o) => {
                 let n = DataGenerator.generateToken();
-                if (t) throw t;
+                if (s) throw s;
                 /**
                          * Creates a simple human into the database
                          */                DatabaseManager.insert(e, {
@@ -146,8 +146,8 @@ class DatabaseManager extends n.MongoClient {
                 c.sendMail(l, (function(e, a) {
                     e && console.log(e);
                 })), r.status = "Error", r.message = "Account created! Welcome to the game! Please verify your account and try again", 
-                s(r);
-            }) : (r.status = "Error", r.message = "Invalid email structure", s(r));
+                t(r);
+            }) : (r.status = "Error", r.message = "Invalid email structure", t(r));
         });
     }
     /**
@@ -162,14 +162,14 @@ class DatabaseManager extends n.MongoClient {
      * @param {} db database you want to find info from
      * @param {Object} data JSON data to find
      * @param {Function} callback what to do after you find data, if you do
-     */    static find(e, a, t) {
+     */    static find(e, a, s) {
         e.findOne(a, (e, a) => {
-            t(e, a);
+            s(e, a);
         });
     }
-    static update(e, a, t) {
+    static update(e, a, s) {
         e.updateOne(a, {
-            $set: t
+            $set: s
         }, () => {});
     }
 }
@@ -179,12 +179,12 @@ class Messenger {
      * Checks if the player email and pass are valid, and if so, send them the server
      */
     static login(e, a) {
-        e.post("/login", (e, t) => {
+        e.post("/login", (e, s) => {
             DatabaseManager.connectToGame(a, e.body.email, e.body.password, e => {
-                "ok" == e.status ? t.status(201).send({
+                "ok" == e.status ? s.status(201).send({
                     socket: "ws://localhost:59072"
-                }) : t.status(401).send({
-                    reason: e.statusMessage
+                }) : s.status(401).send({
+                    reason: e.message
                 });
             });
         });
@@ -192,18 +192,27 @@ class Messenger {
     /**
      * Token verification system that is given from email
      */    static verify(e, a) {
-        e.post("/verify", (e, t) => {
+        e.post("/verify", (e, s) => {
             DatabaseManager.find(a, {
                 token: e.body.token
-            }, (t, s) => {
+            }, (t, r) => {
                 if (t) throw t;
-                if (null != s) {
-                    s.verified = !0, DatabaseManager.update(a, {
+                null != r && DatabaseManager.find(a, {
+                    username: e.body.username
+                }, (t, o) => {
+                    null == o ? 0 == r.verified ? (DatabaseManager.update(a, {
                         token: e.body.token
                     }, {
-                        verified: !0
+                        verified: !0,
+                        username: e.body.username
+                    }), s.send({
+                        status: "This username has been set"
+                    })) : s.send({
+                        status: "This account is already verified"
+                    }) : s.send({
+                        status: "This username is taken."
                     });
-                }
+                });
             });
         });
     }
@@ -219,18 +228,18 @@ class WorldManager {
             name: e,
             owner: null
         };
-        return a.map = WorldManager.createMap(), worlds[e] = a, s.writeFileSync(`worlds/${e}.json`, r.serialize(a)), 
+        return a.map = WorldManager.createMap(), worlds[e] = a, t.writeFileSync(`worlds/${e}.json`, r.serialize(a)), 
         a;
     }
     /**
      * Creates a map as a blank state for a world
      */    static createMap() {
         let e = [];
-        for (let a = 0; a < 10; a++) for (let t = 0; t < 10; t++) e.push({
+        for (let a = 0; a < 10; a++) for (let s = 0; s < 10; s++) e.push({
             tile: "cobble",
             type: "backdrop",
             x: 96 * a,
-            y: 96 * t
+            y: 96 * s
         });
         return e;
     }
@@ -243,51 +252,41 @@ class PlayerManager {
      * @param {Object} query JSON query to find
      * @param {Function} callback what to do afterwards
      */
-    static getPlayer(e, a, t) {
+    static getPlayer(e, a, s) {
         DatabaseManager.find(e, a, (e, a) => {
             if (e) throw e;
-            null != a ? (delete a.password, t(a)) : t(a);
+            null != a ? (delete a.password, s(a)) : s(a);
         });
     }
-    static setDefaultPlayer(e, a, t, s) {
+    static setDefaultPlayer(e, a, s, t) {
         PlayerManager.getPlayer(e, {
             email: a.email
         }, e => {
-            players[t.id] = e, players[t.id].id = t.id, players[t.id].x = 0, players[t.id].y = 0, 
-            players[t.id].ws = t, players[t.id].ready = !1, Socket.send(t, {
+            players[s.id] = e, players[s.id].id = s.id, players[s.id].x = 0, players[s.id].y = 0, 
+            players[s.id].ws = s, players[s.id].username = e.username, players[s.id].ready = !1, 
+            Socket.send(s, {
                 type: "status",
                 login: !0,
-                message: s.message
-            }), Socket.send(t, {
+                message: t.message
+            }), Socket.send(s, {
                 type: "setID",
-                id: t.id
-            }), worlds.start || WorldManager.createWorld("start"), Socket.send(t, {
+                id: s.id
+            }), worlds.start || WorldManager.createWorld("start"), Socket.send(s, {
                 type: "setWorld",
                 world: worlds.start
-            }), null == e.username ? 
-            /**
-                 * Sends the html code for the user to enter a username
-                 * 
-                 * Needs fixing for unique usernames
-                 */
-            setTimeout(() => {
-                Socket.send(t, {
-                    type: "setUsername",
-                    html: '\n                        <form id="usernameSet" class="centeredForm">\n                            <input id="username" placeholder="Input your username">\n                            <button type="submit">Submit</button>\n                        </form>\n                    '
-                }, 1e3);
-            }) : players[t.id].username = e.username;
+            });
         });
     }
 }
 
 class SocketSwitch {
     constructor() {}
-    static connect(e, a, t) {
-        DatabaseManager.connectToGame(e, a.email, a.password, s => {
-            "ok" == s.status ? PlayerManager.setDefaultPlayer(e, a, t, s) : Socket.send(t, {
+    static connect(e, a, s) {
+        DatabaseManager.connectToGame(e, a.email, a.password, t => {
+            "ok" == t.status ? PlayerManager.setDefaultPlayer(e, a, s, t) : Socket.send(s, {
                 type: "status",
                 login: !1,
-                message: s.message
+                message: t.message
             });
         });
     }
@@ -307,10 +306,10 @@ class SocketSwitch {
             }
         });
     }
-    static loadWorld(e, a, t) {
-        t[a.world] || WorldManager.createWorld(a.world), Socket.send(e, {
+    static loadWorld(e, a, s) {
+        s[a.world] || WorldManager.createWorld(a.world), Socket.send(e, {
             type: "setWorld",
-            world: t[a.world]
+            world: s[a.world]
         });
     }
     static sendMessage(e, a) {
@@ -319,8 +318,8 @@ class SocketSwitch {
             message: `${players[e.id].username}: ${a.message}`
         });
     }
-    static setUsername(e, a, t) {
-        DatabaseManager.update(t, {
+    static setUsername(e, a, s) {
+        DatabaseManager.update(s, {
             email: players[e.id].email
         }, {
             username: a.user
@@ -334,15 +333,15 @@ class SocketSwitch {
  * Mail server
  */ const d = e(), u = process.argv[2] || 3e3;
 
-d.use(e.static(a.join(__dirname, "/public"))), d.use(t.json()), d.use(t.urlencoded({
+d.use(e.static(a.join(__dirname, "/public"))), d.use(s.json()), d.use(s.urlencoded({
     extended: !0
-})), d.get("*", (e, t) => {
-    t.sendFile(a.resolve(__dirname, "public/index.html"));
+})), d.get("*", (e, s) => {
+    s.sendFile(a.resolve(__dirname, "public/index.html"));
 }), d.listen(u, () => {
     console.log("Server is now listening at " + u);
 });
 
-const p = new Socket({
+const y = new Socket({
     port: 59072
 });
 
@@ -350,15 +349,15 @@ const p = new Socket({
 global.players = {}, global.worlds = {};
 
 // Loads our worlds
-for (let e of s.readdirSync("worlds")) {
-    let a = r.deserialize(s.readFileSync("worlds/" + e), "utf-8");
+for (let e of t.readdirSync("worlds")) {
+    let a = r.deserialize(t.readFileSync("worlds/" + e), "utf-8");
     worlds[e.substr(0, e.length - 5)] = a;
 }
 
 DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e => {
-    Messenger.login(d, e), Messenger.verify(d, e), p.on("connection", a => {
-        a.id = DataGenerator.generateID(99999999999), a.onmessage = t => {
-            switch ((t = JSON.parse(t.data)).type) {
+    Messenger.login(d, e), Messenger.verify(d, e), y.on("connection", a => {
+        a.id = DataGenerator.generateID(99999999999), a.onmessage = s => {
+            switch ((s = JSON.parse(s.data)).type) {
               /**
                  * Connects the player so taht we may load them and collect their data
                  */
@@ -366,7 +365,7 @@ DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e
                 /**
                      * Checks the player connection database, and returns a status
                      */
-                SocketSwitch.connect(e, t, a);
+                SocketSwitch.connect(e, s, a);
                 break;
 
                 /**
@@ -380,25 +379,25 @@ DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e
                 /**
                      * When the player moves, send an update for that player to all clients in the game
                      */              case "move":
-                SocketSwitch.movePlayer(a, t);
+                SocketSwitch.movePlayer(a, s);
                 break;
 
                 /**
                      * Load the world that the player wants, used for future purposes
                      */              case "loadWorld":
-                SocketSwitch.loadWorld(a, t, worlds);
+                SocketSwitch.loadWorld(a, s, worlds);
                 break;
 
                 /**
                      * On a chat message, send it to all players with the user's username
                      */              case "chatMessage":
-                SocketSwitch.sendMessage(a, t);
+                SocketSwitch.sendMessage(a, s);
                 break;
 
                 /**
                      * When the user has no username, it is set here so that they may have one
                      */              case "setUser":
-                SocketSwitch.setUsername(a, t, e);
+                SocketSwitch.setUsername(a, s, e);
             }
         }, 
         /**

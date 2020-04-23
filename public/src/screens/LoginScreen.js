@@ -100,13 +100,19 @@ export class LoginScreen extends Component {
             password: password
         });
 
+
         if (response.status != 201) {
-            this.state.status = response.data.reason;
+            response.data.then(logic => {
+                this.state.status = logic.reason;
+            });
             return;
         } else {
             response.data.then((data) => {
                 this.style.display = "none";
                 Screen.setScreen(new Game(data.socket, email, password));
+                let audio = new Audio("assets/main.mp4");
+                audio.loop = true;
+                audio.play();
             });
         }
 

@@ -1,14 +1,12 @@
-import { View, Router, request } from "jolt";
+import { View, Component } from "jolt";
+import { InputVerification } from "./InputVerification";
+
+Component.register("input-verification", InputVerification);
 
 export class Verification extends View {
-
-
     render() {
-        return `<h1>Account has been verified successfully</h1>`;
-    }
-
-    async didLoad() {
-        const { token } = Router.getParameters();
-        await request.post("/verify", { token: token });
+        return `
+            <input-verification></input-verification>
+        `;
     }
 }

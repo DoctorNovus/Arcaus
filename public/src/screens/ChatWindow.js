@@ -1,5 +1,4 @@
 import { Component } from "jolt";
-import { Socket } from "../Socket";
 
 export class ChatWindow extends Component {
     constructor() {

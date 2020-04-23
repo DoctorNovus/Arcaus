@@ -28,6 +28,7 @@ export class PlayerManager {
             players[ws.id].x = 0;
             players[ws.id].y = 0;
             players[ws.id].ws = ws;
+            players[ws.id].username = data.username;
             players[ws.id].ready = false;
 
             Socket.send(ws, {
@@ -49,27 +50,6 @@ export class PlayerManager {
                 type: "setWorld",
                 world: worlds["start"]
             });
-
-            if (data.username == (null || undefined)) {
-                /**
-                 * Sends the html code for the user to enter a username
-                 * 
-                 * Needs fixing for unique usernames
-                 */
-                setTimeout(() => {
-                    Socket.send(ws, {
-                        type: "setUsername",
-                        html: `
-                        <form id="usernameSet" class="centeredForm">
-                            <input id="username" placeholder="Input your username">
-                            <button type="submit">Submit</button>
-                        </form>
-                    `
-                    }, 1000);
-                });
-            } else {
-                players[ws.id].username = data.username;
-            }
         });
     }
 }

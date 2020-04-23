@@ -87,8 +87,8 @@ export class Keybinds {
                         game.world.map.push({
                             tile: "cobble",
                             type: "backdrop",
-                            x: (Math.floor(pos.x / 96) * 96) - 96 / 2,
-                            y: (Math.floor(pos.y / 96) * 96) - 96 / 2,
+                            x: (Math.floor(pos.x / 96) * 96),
+                            y: (Math.floor(pos.y / 96) * 96),
                         });
                     }
                     break;
