@@ -1,6 +1,7 @@
 import { DatabaseManager } from "./DatabaseManager";
 import { Socket } from "./Socket";
 import { PlayerManager } from "./PlayerManager";
+import { WorldManager } from "./WorldManager";
 
 export class SocketSwitch {
     constructor() {}
@@ -47,9 +48,11 @@ export class SocketSwitch {
                 world: worlds[data.world]
             });
         } else {
+            WorldManager.createWorld(data.world)
+
             Socket.send(ws, {
                 type: "setWorld",
-                world: createWorld(data.world)
+                world: worlds[data.world]
             });
         }
     }

@@ -11,6 +11,7 @@ export class Player extends Renderable {
 
         this.width = width;
         this.height = height;
+        this.setSize(width, height);
 
         this.direction = {
             up: false,

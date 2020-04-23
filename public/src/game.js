@@ -47,6 +47,7 @@ export class Game extends Screen {
                 let sector = new Sector(
                     tile.x,
                     tile.y,
+                    96, 96,
                     tile.type,
                     game.materials[tile.tile]
                 );

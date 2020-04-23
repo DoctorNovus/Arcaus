@@ -1,5 +1,6 @@
 import { DatabaseManager } from "./DatabaseManager";
 import { Socket } from "./Socket";
+import { WorldManager } from "./WorldManager";
 
 export class PlayerManager {
     /**
@@ -39,6 +40,10 @@ export class PlayerManager {
                 type: "setID",
                 id: ws.id
             });
+
+            if (!worlds["start"]) {
+                WorldManager.createWorld("start");
+            }
 
             Socket.send(ws, {
                 type: "setWorld",

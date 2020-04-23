@@ -1,3 +1,6 @@
+import fs from "fs";
+import BSON from "bson";
+
 export class WorldManager {
 
     /**
@@ -10,10 +13,12 @@ export class WorldManager {
         };
 
         world.owner = null;
-        world.map = createMap();
+        world.map = WorldManager.createMap();
 
         worlds[name] = world;
         fs.writeFileSync(`worlds/${name}.json`, BSON.serialize(world));
+
+        return world;
     }
 
     /**

@@ -7,7 +7,6 @@ export class GameManager {
         game.display.create();
         game.loader = new Loader();
         game.camera = new Camera(window.innerWidth, window.innerHeight);
-
         Device.on("resize", () => {
             game.display.resize(window.innerWidth, window.innerHeight);
         });

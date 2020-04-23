@@ -41,8 +41,8 @@ export class Socket extends WebSocket {
                         let player = new Player(
                             p.x,
                             p.y,
-                            32,
-                            32,
+                            96,
+                            96,
                             game.animations["base_idle_right"]
                         );
                         player.id = p.id;

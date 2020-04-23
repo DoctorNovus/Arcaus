@@ -209,6 +209,33 @@ class Messenger {
     }
 }
 
+class WorldManager {
+    /**
+     * Creates a world with inputted text
+     * @param {String} name name of the world
+     */
+    static createWorld(e) {
+        let a = {
+            name: e,
+            owner: null
+        };
+        return a.map = WorldManager.createMap(), worlds[e] = a, s.writeFileSync(`worlds/${e}.json`, r.serialize(a)), 
+        a;
+    }
+    /**
+     * Creates a map as a blank state for a world
+     */    static createMap() {
+        let e = [];
+        for (let a = 0; a < 10; a++) for (let t = 0; t < 10; t++) e.push({
+            tile: "cobble",
+            type: "backdrop",
+            x: 96 * a,
+            y: 96 * t
+        });
+        return e;
+    }
+}
+
 class PlayerManager {
     /**
      * Returns a player from the database, but strips password for security purposes
@@ -234,7 +261,7 @@ class PlayerManager {
             }), Socket.send(t, {
                 type: "setID",
                 id: t.id
-            }), Socket.send(t, {
+            }), worlds.start || WorldManager.createWorld("start"), Socket.send(t, {
                 type: "setWorld",
                 world: worlds.start
             }), null == e.username ? 
@@ -281,12 +308,9 @@ class SocketSwitch {
         });
     }
     static loadWorld(e, a, t) {
-        t[a.world] ? Socket.send(e, {
+        t[a.world] || WorldManager.createWorld(a.world), Socket.send(e, {
             type: "setWorld",
             world: t[a.world]
-        }) : Socket.send(e, {
-            type: "setWorld",
-            world: createWorld(a.world)
         });
     }
     static sendMessage(e, a) {
@@ -318,7 +342,7 @@ d.use(e.static(a.join(__dirname, "/public"))), d.use(t.json()), d.use(t.urlencod
     console.log("Server is now listening at " + u);
 });
 
-const y = new Socket({
+const p = new Socket({
     port: 59072
 });
 
@@ -332,7 +356,7 @@ for (let e of s.readdirSync("worlds")) {
 }
 
 DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e => {
-    Messenger.login(d, e), Messenger.verify(d, e), y.on("connection", a => {
+    Messenger.login(d, e), Messenger.verify(d, e), p.on("connection", a => {
         a.id = DataGenerator.generateID(99999999999), a.onmessage = t => {
             switch ((t = JSON.parse(t.data)).type) {
               /**

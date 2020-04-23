@@ -65,12 +65,13 @@ export class Keybinds {
                         for (let i in game.world.map) {
                             let tile = game.world.map[i];
                             tile.rect = new Rectangle(
-                                Math.floor(tile.x / 96) * 96,
-                                Math.floor(tile.y / 96) * 96,
+                                ((Math.floor(tile.x) / 96) * 96) - 96 / 2,
+                                ((Math.floor(tile.y) / 96) * 96) - 96 / 2,
                                 96,
                                 96
                             );
-                            if (sector.rect.overlaps(tile.rect)) {
+
+                            if (sector.rect.contains(tile.x, tile.y)) {
                                 game.world.map.splice(i, 1);
                             }
                         }
@@ -86,8 +87,8 @@ export class Keybinds {
                         game.world.map.push({
                             tile: "cobble",
                             type: "backdrop",
-                            x: Math.floor(pos.x / 98) * 98,
-                            y: Math.floor(pos.y / 98) * 98,
+                            x: (Math.floor(pos.x / 96) * 96) - 96 / 2,
+                            y: (Math.floor(pos.y / 96) * 96) - 96 / 2,
                         });
                     }
                     break;
