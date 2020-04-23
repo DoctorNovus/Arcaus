@@ -17,11 +17,11 @@ export class Game extends Screen {
             players: [],
         };
 
-        this.ws = new Socket(url, email, password)
-        this.ws.trackOpen();
-        this.ws.trackMessage();
-        this.ws.trackError();
-        this.ws.trackClose();
+        window.ws = new Socket(url, email, password)
+        ws.trackOpen();
+        ws.trackMessage();
+        ws.trackError();
+        ws.trackClose();
     }
 
     create() {
@@ -33,7 +33,7 @@ export class Game extends Screen {
     }
 
     update() {
-        Mapper.movement(this.ws);
+        Mapper.movement(ws);
         let p = game.players.find((p) => p.id == game.playerID);
         game.camera.setPosition(p.x, p.y);
         game.camera.update();

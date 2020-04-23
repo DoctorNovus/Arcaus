@@ -10,6 +10,8 @@ export class GameManager {
         Device.on("resize", () => {
             game.display.resize(window.innerWidth, window.innerHeight);
         });
+
+        document.getElementById("chatBox").style.display = "block";
     }
 
     static async loadAssets() {

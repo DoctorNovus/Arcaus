@@ -81,8 +81,8 @@ export class LoginScreen extends Component {
 
             <img src="assets/logo.png" id="background" />
             <form @submit="validateAccount">
-                <input id="email" type="email" placeholder="Email" autocomplete="on" />
-                <input id="password" type="password" placeholder="Password" autocomplete="on" />
+                <input id="email" type="email" placeholder="Email" name="email" for="email"/>
+                <input id="password" type="password" placeholder="Password" name="password" for="password" />
                 <button type="submit">Connect</button>
                 <span>${this.state.status}</span>
             </form>

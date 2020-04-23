@@ -13,4 +13,8 @@ export class App extends View {
             <chat-window id="chatBox"></chat-window>
         `;
     }
+
+    didLoad() {
+        document.getElementById("chatBox").style.display = "none";
+    }
 }

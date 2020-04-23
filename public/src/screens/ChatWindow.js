@@ -1,44 +1,60 @@
 import { Component } from "jolt";
+import { Socket } from "../Socket";
 
 export class ChatWindow extends Component {
     constructor() {
         super();
 
-        this.state.messages = [];
+        this.state.messages = "";
     }
 
     render() {
         const messages = this._updateMessages(this.state.messages);
         return `
         <style>
-            chat-window{
-                display: hidden;
+            :host {
+                background-color: rgba(255, 255, 255, 0.5);
+                width: 25%;
+                height: 30%;
+                position: absolute;
+                bottom: 0%;
+                left: 0%;
             }
 
             #messages{
                 position: absolute;
                 bottom: 10%;
                 left: 0%;
+                width: 99.5%;
+                height: 90%;
             }
 
             #chatInput{
                 position: absolute;
                 bottom: 0%;
                 left: 0%;
+                height: 10%;
+                width: 99.5%;
+                background-color: transparent;
+                border: 1px solid black;
             }
-
         </style>
 
-        <div id="messages">
-        ${messages}
-        </div>
-        <input id="chatInput" placeholder="Send Message" @submit="sendMessage" />
+        <form @submit="sendMessage">
+            <div id="messages" class="chatBoxElement">
+            ${messages}
+            </div>
+            <input id="chatInput" class="chatBoxElement" placeholder="Send Message"/>
+        </form>
         `;
     }
 
-    sendMessage() {
-        let input = event.path[0][0];
-        Socket.send({
+    sendMessage(e) {
+        e.preventDefault();
+
+        let input = e.path[0][0];
+
+        ws.send({
             type: "chatMessage",
             message: input.value
         });
@@ -46,10 +62,11 @@ export class ChatWindow extends Component {
         input.value = "";
     }
 
-    _updateMessages(messages) {
-        const toDisplay = [];
+    _updateMessages(text) {
+        let toDisplay = "";
+        const messages = text.split(/;/g);
         for (let message of messages) {
-            toDisplay.push(`<span>${message}</span>`);
+            toDisplay += `<span>${message}</span><br>`;
         }
 
         return toDisplay;

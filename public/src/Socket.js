@@ -61,7 +61,7 @@ export class Socket extends WebSocket {
 
                 case "chatMessage":
                     let chat = document.getElementById("chatBox");
-                    chat.state.messages += `${data.message}\r\n`;
+                    chat.state.messages += `${data.message};`;
                     break;
             }
         }
