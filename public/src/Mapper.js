@@ -87,4 +87,12 @@ export class Mapper {
 
         }
     }
+
+    static getSurrounding(x, y, width, height) {
+        if (!Mapper.findSector(x, y + height)) {
+            return "core";
+        } else {
+            return "top";
+        }
+    }
 }

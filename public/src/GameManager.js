@@ -1,4 +1,5 @@
-import { Device, Display, Loader, Camera, Animation, Texture } from "@outwalk/skylark";
+import { Device, Display, Loader, Camera, Animation, Texture, TextureRegion } from "@outwalk/skylark";
+import { Train } from "./Train";
 
 export class GameManager {
 
@@ -16,12 +17,12 @@ export class GameManager {
 
     static async loadAssets() {
         game.loader.add("assets/Base_Sprite_Walk.png");
-        game.loader.add("assets/cobble.png");
+        game.loader.add("assets/tileset.png");
 
         await game.loader.loadAssets();
 
         game.assets["base_walk"] = game.loader.get("assets/Base_Sprite_Walk.png");
-        game.assets["cobble"] = game.loader.get("assets/cobble.png");
+        game.assets["tileset"] = game.loader.get("assets/tileset.png");
 
         GameManager.setAnimations();
         GameManager.setMaterials();
@@ -40,7 +41,7 @@ export class GameManager {
     }
 
     static setMaterials() {
-        game.materials["cobble"] = new Texture(game.assets["cobble"]);
+        game.train = new Train(game.assets["tileset"]);
+        game.materials["tileset"] = new Texture(game.assets["tileset"]);
     }
-
 }

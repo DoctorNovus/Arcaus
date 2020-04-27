@@ -1,4 +1,5 @@
 import { Player } from "./Player";
+import { Mapper } from "./Mapper";
 
 export class Socket extends WebSocket {
     constructor(url, email, password) {

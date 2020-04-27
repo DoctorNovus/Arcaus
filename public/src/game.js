@@ -4,6 +4,7 @@ import { GameManager } from "./GameManager";
 import { Keybinds } from "./Keybinds";
 import { Mapper } from "./Mapper";
 import { Sector } from "./Sector";
+import { TileSet } from "./TileSet";
 
 export class Game extends Screen {
     constructor(url, email, password) {
@@ -15,6 +16,7 @@ export class Game extends Screen {
             id: 1,
             materials: {},
             players: [],
+            textureRegion: {}
         };
 
         window.ws = new Socket(url, email, password)
@@ -33,10 +35,14 @@ export class Game extends Screen {
     }
 
     update() {
-        Mapper.movement(ws);
-        let p = game.players.find((p) => p.id == game.playerID);
-        game.camera.setPosition(p.x, p.y);
-        game.camera.update();
+        try {
+            Mapper.movement(ws);
+            let p = game.players.find((p) => p.id == game.playerID);
+            game.camera.setPosition(p.x, p.y);
+            game.camera.update();
+        } catch (err) {
+
+        }
     }
 
     render() {
@@ -44,12 +50,16 @@ export class Game extends Screen {
         if (game.world) {
             for (let i in game.world.map) {
                 let tile = game.world.map[i];
+                let area = Mapper.getSurrounding(tile.x, tile.y, 96, 96);
+                let { x, y } = TileSet.getTile("dirt", area);
+                game.train.setRegion(x, y);
+
                 let sector = new Sector(
                     tile.x,
                     tile.y,
                     96, 96,
                     tile.type,
-                    game.materials[tile.tile]
+                    game.train
                 );
                 sector.draw(game.camera);
             }
