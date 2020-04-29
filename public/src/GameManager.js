@@ -18,11 +18,13 @@ export class GameManager {
     static async loadAssets() {
         game.loader.add("assets/Base_Sprite_Walk.png");
         game.loader.add("assets/tileset.png");
+        game.loader.add("assets/background.png");
 
         await game.loader.loadAssets();
 
         game.assets["base_walk"] = game.loader.get("assets/Base_Sprite_Walk.png");
         game.assets["tileset"] = game.loader.get("assets/tileset.png");
+        game.assets["background"] = game.loader.get("assets/background.png");
 
         GameManager.setAnimations();
         GameManager.setMaterials();
@@ -43,5 +45,6 @@ export class GameManager {
     static setMaterials() {
         game.train = new Train(game.assets["tileset"]);
         game.materials["tileset"] = new Texture(game.assets["tileset"]);
+        game.materials["background"] = new Texture(game.assets["background"]);
     }
 }

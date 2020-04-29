@@ -100,22 +100,15 @@ export class LoginScreen extends Component {
             password: password
         });
 
-
         if (response.status != 201) {
-            response.data.then(logic => {
-                this.state.status = logic.reason;
-            });
+            this.state.status = logic.reason;
             return;
         } else {
-            response.data.then((data) => {
-                this.style.display = "none";
-                Screen.setScreen(new Game(data.socket, email, password));
-                let audio = new Audio("assets/main.mp4");
-                audio.loop = true;
-                audio.play();
-            });
+            this.style.display = "none";
+            Screen.setScreen(new Game(response.data.socket, email, password));
+            let audio = new Audio("assets/main.mp4");
+            audio.loop = true;
+            audio.play();
         }
-
-        /* create websocket connection and change screen */
     }
 }

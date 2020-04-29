@@ -1,4 +1,4 @@
-import { Screen } from "@outwalk/skylark";
+import { Screen, Renderable } from "@outwalk/skylark";
 import { Socket } from "./Socket";
 import { GameManager } from "./GameManager";
 import { Keybinds } from "./Keybinds";
