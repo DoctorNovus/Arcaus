@@ -24,4 +24,12 @@ export class Socket extends Server {
             Socket.send(players[i].ws, data);
         }
     }
+
+    static sendAllInWorld(world, data) {
+        for (let i in players) {
+            if (players[i].world == world) {
+                Socket.send(players[i].ws, data);
+            }
+        }
+    }
 }

@@ -1,8 +1,5 @@
 /* imports */
-import express from "express";
 import path from "path";
-
-import bodyParser from "body-parser";
 import fs from "fs";
 import BSON from "bson";
 import { Socket } from "./scripts/Socket";
@@ -10,26 +7,21 @@ import { DatabaseManager } from "./scripts/DatabaseManager";
 import { Messenger } from "./scripts/Messenger";
 import { SocketSwitch } from "./scripts/SocketSwitch";
 import { DataGenerator } from "./scripts/DataGenerator";
+import Server from "jolt-server";
 
 /**
  * Website server
  * Mail server
  */
-const app = express();
 const port = process.argv[2] || 3000;
 const url = "mongodb://localhost:27017/";
-
-app.use(express.static(path.join(__dirname, "/public")));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "public/index.html"));
-});
-
-app.listen(port, () => {
-    console.log(`Server is now listening at ${port}`);
-});
+const app = Server({
+    port: port,
+    root: process.cwd() + "/public",
+    file: "index.html",
+    live: true,
+    spa: true
+})
 
 const socket = new Socket({ port: 59072 });
 
@@ -44,8 +36,9 @@ for (let worldName of fs.readdirSync("worlds")) {
 }
 
 DatabaseManager.connectToDB(url, "arcaus", "players", db => {
-    Messenger.login(app, db);
-    Messenger.verify(app, db);
+    global.db = db;
+    Messenger.login(app);
+    Messenger.verify(app);
 
     socket.on("connection", ws => {
         ws.id = DataGenerator.generateID(99999999999);
@@ -82,7 +75,7 @@ DatabaseManager.connectToDB(url, "arcaus", "players", db => {
                      * Load the world that the player wants, used for future purposes
                      */
                 case "loadWorld":
-                    SocketSwitch.loadWorld(ws, data, worlds);
+                    SocketSwitch.loadWorld(ws, data);
                     break;
 
                     /**
@@ -97,6 +90,10 @@ DatabaseManager.connectToDB(url, "arcaus", "players", db => {
                      */
                 case "setUser":
                     SocketSwitch.setUsername(ws, data, db);
+                    break;
+
+                case "click":
+                    SocketSwitch.click(ws, data);
                     break;
             }
         };

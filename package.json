@@ -12,16 +12,16 @@
     "author": "Ottegi",
     "license": "MIT",
     "dependencies": {
-        "@outwalk/sable": "^1.2.3",
-        "@outwalk/skylark": "^0.2.1",
+        "@outwalk/sable": "^1.3.0",
+        "@outwalk/skylark": "^0.2.2",
         "bcrypt": "^4.0.1",
         "body-parser": "^1.19.0",
         "bson": "^4.0.4",
-        "express": "^4.17.1",
-        "jolt": "^2.0.0",
+        "jolt": "^2.1.0",
+        "jolt-server": "^1.0.1",
         "mongod": "^2.0.0",
-        "mongodb": "^3.5.6",
+        "mongodb": "^3.5.7",
         "nodemailer": "^6.4.6",
-        "ws": "^7.2.3"
+        "ws": "^7.2.5"
     }
 }

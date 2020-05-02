@@ -30,6 +30,7 @@ export class PlayerManager {
             players[ws.id].ws = ws;
             players[ws.id].username = data.username;
             players[ws.id].ready = false;
+            players[ws.id].world = "start";
 
             Socket.send(ws, {
                 type: "status",

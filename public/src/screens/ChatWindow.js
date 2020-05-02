@@ -5,10 +5,12 @@ export class ChatWindow extends Component {
         super();
 
         this.state.messages = "";
+        this.state.value = "";
     }
 
     render() {
         const messages = this._updateMessages(this.state.messages);
+        const value = this._updateValue(this.state.value);
         return `
         <style>
             :host {
@@ -43,7 +45,7 @@ export class ChatWindow extends Component {
             <div id="messages" class="chatBoxElement">
             ${messages}
             </div>
-            <input id="chatInput" class="chatBoxElement" placeholder="Send Message"/>
+            <input id="chatInput" value="${value}" class="chatBoxElement" placeholder="Send Message"/>
         </form>
         `;
     }
@@ -69,5 +71,9 @@ export class ChatWindow extends Component {
         }
 
         return toDisplay;
+    }
+
+    _updateValue(text) {
+        return text;
     }
 }

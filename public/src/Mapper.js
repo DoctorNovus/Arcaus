@@ -1,7 +1,7 @@
 import { Sector } from "./Sector";
 
 export class Mapper {
-    static findSector(x, y) {
+    static findSector(game, x, y) {
         for (let tile of game.world.map) {
             let sector = new Sector(
                 tile.x,
@@ -33,63 +33,8 @@ export class Mapper {
         }
     }
 
-    static movement(socket) {
-        try {
-            let p = game.players.find((p) => p.id == game.playerID);
-            if (p.direction.up) {
-                if (!Mapper.collidesWithObject(p, 0, 5)) {
-                    socket.send({
-                        type: "move",
-                        pos: {
-                            x: p.x,
-                            y: p.y + 5,
-                        },
-                    });
-                }
-            }
-
-            if (p.direction.left) {
-                if (!Mapper.collidesWithObject(p, -5, 0)) {
-                    socket.send({
-                        type: "move",
-                        pos: {
-                            x: p.x - 5,
-                            y: p.y,
-                        },
-                    });
-                }
-            }
-
-            if (p.direction.down) {
-                if (!Mapper.collidesWithObject(p, 0, -5)) {
-                    socket.send({
-                        type: "move",
-                        pos: {
-                            x: p.x,
-                            y: p.y - 5,
-                        },
-                    });
-                }
-            }
-
-            if (p.direction.right) {
-                if (!Mapper.collidesWithObject(p, 5, 0)) {
-                    socket.send({
-                        type: "move",
-                        pos: {
-                            x: p.x + 5,
-                            y: p.y,
-                        },
-                    });
-                }
-            }
-        } catch (err) {
-
-        }
-    }
-
-    static getSurrounding(x, y, width, height) {
-        if (!Mapper.findSector(x, y + height)) {
+    static getSurrounding(game, x, y, width, height) {
+        if (!Mapper.findSector(game, x, y + height)) {
             return "core";
         } else {
             return "top";

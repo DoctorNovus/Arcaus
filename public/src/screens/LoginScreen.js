@@ -100,8 +100,10 @@ export class LoginScreen extends Component {
             password: password
         });
 
+        console.log(response);
+
         if (response.status != 201) {
-            this.state.status = logic.reason;
+            this.state.status = response.data.reason;
             return;
         } else {
             this.style.display = "none";

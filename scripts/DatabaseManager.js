@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 
 export class DatabaseManager extends MongoClient {
     static connectToDB(url, dbName, collectionName, callback) {
-        super.connect(url, (err, db) => {
+        super.connect(url, { useUnifiedTopology: true }, (err, db) => {
             if (err) throw err;
 
             db = db.db(dbName);

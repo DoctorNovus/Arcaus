@@ -27,10 +27,11 @@ export class WorldManager {
     static createMap() {
         let map = [];
 
+
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
                 map.push({
-                    tile: "cobble",
+                    tile: "dirt",
                     type: "backdrop",
                     x: i * 96,
                     y: j * 96

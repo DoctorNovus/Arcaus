@@ -8,7 +8,7 @@ export class Socket extends WebSocket {
         this.password = password;
     }
 
-    trackOpen() {
+    trackOpen(game) {
         super.onopen = () => {
             this.send({
                 type: "connect",
@@ -18,7 +18,7 @@ export class Socket extends WebSocket {
         }
     }
 
-    trackMessage() {
+    trackMessage(game) {
         super.onmessage = (data) => {
             data = JSON.parse(data.data);
             switch (data.type) {
@@ -33,6 +33,7 @@ export class Socket extends WebSocket {
 
                 case "setWorld":
                     game.world = data.world;
+                    console.log(game.world);
                     break;
 
                 case "setPlayers":
