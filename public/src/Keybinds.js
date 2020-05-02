@@ -32,9 +32,11 @@ export class Keybinds {
                     direction: "right"
                 });
             }
-        } else {
 
-        }
+            if (Keyboard.isKeyDown(Keys.ESCAPE)) {
+                document.getElementById("settingsMenu").style.display = "flex";
+            }
+        } else {}
     };
 
     static windowClick(game, socket) {
