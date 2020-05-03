@@ -17,7 +17,7 @@ const port = process.argv[2] || 3000;
 const url = "mongodb://localhost:27017/";
 const app = Server({
     port: port,
-    root: process.cwd() + "/public",
+    root: process.cwd() + "\\public",
     file: "index.html",
     live: true,
     spa: true
@@ -94,6 +94,10 @@ DatabaseManager.connectToDB(url, "arcaus", "players", db => {
 
                 case "click":
                     SocketSwitch.click(ws, data);
+                    break;
+
+                case "getWorlds":
+                    SocketSwitch.loadWorlds(ws);
                     break;
             }
         };

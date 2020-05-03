@@ -32,8 +32,15 @@ export class SettingsMenu extends Component {
     }
 
     exitWorld() {
-        this.style.display = "none";
-        document.getElementById("worldMenu").style.display = "flex";
+        if (this.ws) {
+            this.style.display = "none";
+            this.ws.send({
+                type: "getWorlds"
+            });
+
+            document.getElementById("worldMenu").style.display = "flex";
+            document.getElementById("chatBox").style.display = "none";
+        }
     }
 
     closeMenu() {

@@ -68,6 +68,15 @@ export class SocketSwitch {
                 type: "setWorld",
                 world: worlds[data.world]
             });
+
+            Socket.sendAll({
+                type: "updatePlayer",
+                player: {
+                    id: ws.id,
+                    world: data.world
+                }
+            });
+
         } else {
             WorldManager.createWorld(data.world)
             players[ws.id].world = data.world;
@@ -75,6 +84,14 @@ export class SocketSwitch {
             Socket.send(ws, {
                 type: "setWorld",
                 world: worlds[data.world]
+            });
+
+            Socket.sendAll({
+                type: "updatePlayer",
+                player: {
+                    id: ws.id,
+                    world: data.world
+                }
             });
         }
     }
@@ -136,6 +153,13 @@ export class SocketSwitch {
         Socket.sendAllInWorld(player.world, {
             type: "setWorld",
             world: worlds[player.world]
+        });
+    }
+
+    static loadWorlds(ws) {
+        Socket.send(ws, {
+            type: "setWorlds",
+            worlds: worlds
         });
     }
 }

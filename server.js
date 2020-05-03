@@ -396,9 +396,21 @@ class SocketSwitch {
         worlds[t.world] ? (players[e.id].world = t.world, Socket.send(e, {
             type: "setWorld",
             world: worlds[t.world]
+        }), Socket.sendAll({
+            type: "updatePlayer",
+            player: {
+                id: e.id,
+                world: t.world
+            }
         })) : (WorldManager.createWorld(t.world), players[e.id].world = t.world, Socket.send(e, {
             type: "setWorld",
             world: worlds[t.world]
+        }), Socket.sendAll({
+            type: "updatePlayer",
+            player: {
+                id: e.id,
+                world: t.world
+            }
         }));
     }
     static sendMessage(e, t) {
@@ -437,6 +449,12 @@ class SocketSwitch {
             world: worlds[a.world]
         });
     }
+    static loadWorlds(e) {
+        Socket.send(e, {
+            type: "setWorlds",
+            worlds
+        });
+    }
 }
 
 /* imports */
@@ -445,11 +463,11 @@ class SocketSwitch {
  * Mail server
  */ const n = l({
     port: process.argv[2] || 3e3,
-    root: process.cwd() + "/public",
+    root: process.cwd() + "\\public",
     file: "index.html",
     live: !0,
     spa: !0
-}), c = new Socket({
+}), d = new Socket({
     port: 59072
 });
 
@@ -463,7 +481,7 @@ for (let a of e.readdirSync("worlds")) {
 }
 
 DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e => {
-    global.db = e, Messenger.login(n), Messenger.verify(n), c.on("connection", t => {
+    global.db = e, Messenger.login(n), Messenger.verify(n), d.on("connection", t => {
         t.id = DataGenerator.generateID(99999999999), t.onmessage = a => {
             switch ((a = JSON.parse(a.data)).type) {
               /**
@@ -510,6 +528,10 @@ DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e
 
               case "click":
                 SocketSwitch.click(t, a);
+                break;
+
+              case "getWorlds":
+                SocketSwitch.loadWorlds(t);
             }
         }, 
         /**

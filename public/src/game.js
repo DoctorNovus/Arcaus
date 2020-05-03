@@ -9,6 +9,8 @@ import { TileSet } from "./TileSet";
 export class Game extends Screen {
     constructor(url, email, password) {
         super();
+        window.joinGameWorld = "";
+        window.messageToBeSent = "";
 
         this.game = {
             animations: {},
@@ -19,7 +21,7 @@ export class Game extends Screen {
             textureRegion: {}
         };
 
-        this.ws = new Socket(url, email, password)
+        this.ws = new Socket(url, email, password);
         this.ws.trackOpen();
         this.ws.trackMessage(this.game);
         this.ws.trackError();
@@ -34,6 +36,24 @@ export class Game extends Screen {
     }
 
     update() {
+        if (joinGameWorld != "") {
+            this.ws.send({
+                type: "loadWorld",
+                world: joinGameWorld
+            });
+
+            joinGameWorld = "";
+        }
+
+        if (messageToBeSent != "") {
+            this.ws.send({
+                type: "chatMessage",
+                message: messageToBeSent
+            });
+
+            messageToBeSent = "";
+        }
+
         Keyboard.update();
         Mouse.update();
         Keybinds.windowKeys(this.game, this.ws);
@@ -66,7 +86,9 @@ export class Game extends Screen {
         }
 
         for (let i = 0; i < this.game.players.length; i++) {
-            this.game.players[i].draw(this.game.camera);
+            if (this.game.players[i].world == this.game.world.name) {
+                this.game.players[i].draw(this.game.camera);
+            }
         }
     }
 }

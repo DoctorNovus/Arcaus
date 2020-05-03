@@ -1,11 +1,17 @@
 import { Player } from "./Player";
-import { Mapper } from "./Mapper";
 
 export class Socket extends WebSocket {
     constructor(url, email, password) {
         super(url);
         this.email = email;
         this.password = password;
+
+        this.setProps();
+    }
+
+    setProps() {
+        document.getElementById("settingsMenu").ws = this;
+        document.getElementById("worldMenu").ws = this;
     }
 
     trackOpen(game) {
@@ -23,7 +29,6 @@ export class Socket extends WebSocket {
             data = JSON.parse(data.data);
             switch (data.type) {
                 case "status":
-                    console.log(data);
                     if (data.login) {
                         this.send({
                             type: "loadPlayers"
@@ -33,7 +38,6 @@ export class Socket extends WebSocket {
 
                 case "setWorld":
                     game.world = data.world;
-                    console.log(game.world);
                     break;
 
                 case "setPlayers":
@@ -48,13 +52,22 @@ export class Socket extends WebSocket {
                             game.animations["base_idle_right"]
                         );
                         player.id = p.id;
+                        player.world = p.world;
                         game.players.push(player);
                     }
                     break
 
                 case "updatePlayer":
                     let player = game.players.find(p => p.id == data.player.id);
-                    player.move(data.player.x, data.player.y);
+                    if (data.player.x) {
+                        player.move(data.player.x, data.player.y);
+                    }
+
+                    if (data.player.world) {
+                        player.world = data.player.world;
+                        document.querySelector("world-menu").style.display = "none";
+                    };
+
                     break;
 
                 case "setID":
@@ -64,6 +77,18 @@ export class Socket extends WebSocket {
                 case "chatMessage":
                     let chat = document.getElementById("chatBox");
                     chat.state.messages += `${data.message};`;
+                    break;
+
+                case "setWorlds":
+                    game.worlds = data.worlds;
+                    let worlds = Object.values(data.worlds);
+                    let text = "";
+                    for (let i = 0; i < worlds.length; i++) {
+                        let world = worlds[i];
+                        text += `<game-world>${world.name}</game-world>`
+                    }
+
+                    document.getElementById("worldMenu").state.worlds = `${text}`;
                     break;
             }
         }

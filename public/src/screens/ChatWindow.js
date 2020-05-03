@@ -55,10 +55,7 @@ export class ChatWindow extends Component {
 
         let input = e.path[0][0];
 
-        ws.send({
-            type: "chatMessage",
-            message: input.value
-        });
+        messageToBeSent = input.value;
 
         input.value = "";
     }
