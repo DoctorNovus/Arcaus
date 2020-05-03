@@ -36,7 +36,7 @@ export class ChatWindow extends Component {
                 left: 0%;
                 height: 10%;
                 width: 99.5%;
-                background-color: transparent;
+                background-color: background-color: rgba(255, 255, 255, 0.75);;
                 border: 1px solid black;
             }
         </style>

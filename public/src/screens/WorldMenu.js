@@ -3,7 +3,7 @@ import { Component } from "jolt";
 export class WorldMenu extends Component {
     constructor() {
         super();
-        this.state.worlds = "";
+        this.state.worlds = [];
     }
 
     render() {

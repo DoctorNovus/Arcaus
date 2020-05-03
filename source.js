@@ -8,6 +8,7 @@ import { Messenger } from "./scripts/Messenger";
 import { SocketSwitch } from "./scripts/SocketSwitch";
 import { DataGenerator } from "./scripts/DataGenerator";
 import Server from "jolt-server";
+import { WorldManager } from "./scripts/WorldManager";
 
 /**
  * Website server
@@ -34,6 +35,18 @@ for (let worldName of fs.readdirSync("worlds")) {
     let world = BSON.deserialize(fs.readFileSync(`worlds/${worldName}`), "utf-8")
     worlds[worldName.substr(0, worldName.length - 5)] = world;
 }
+
+setInterval(_ => {
+    for (let i = 0; i < worlds.length; i++) {
+        WorldManager.saveWorld(worlds[i].name);
+    }
+
+    Socket.sendAll({
+        type: "chatMessage",
+        message: `[Announcement]: The game has been saved.`
+    });
+
+}, 300000);
 
 DatabaseManager.connectToDB(url, "arcaus", "players", db => {
     global.db = db;

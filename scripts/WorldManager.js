@@ -21,6 +21,10 @@ export class WorldManager {
         return world;
     }
 
+    static saveWorld(name) {
+        fs.writeFileSync(`worlds/${name}.json`, BSON.serialize(worlds[name]));
+    }
+
     /**
      * Creates a map as a blank state for a world
      */

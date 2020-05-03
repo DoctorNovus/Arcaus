@@ -38,6 +38,7 @@ export class Socket extends WebSocket {
 
                 case "setWorld":
                     game.world = data.world;
+                    document.getElementById("chatBox").style.display = "block";
                     break;
 
                 case "setPlayers":

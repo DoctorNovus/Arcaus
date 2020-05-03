@@ -94,6 +94,11 @@ export class SocketSwitch {
                 }
             });
         }
+
+        Socket.send(ws, {
+            type: "setWorlds",
+            worlds: worlds
+        });
     }
 
     static sendMessage(ws, data) {

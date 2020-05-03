@@ -77,7 +77,7 @@ class Security {
     }
 }
 
-const i = o.createTransport({
+const n = o.createTransport({
     service: "gmail",
     auth: {
         user: "arcausgame@gmail.com",
@@ -144,13 +144,13 @@ class DatabaseManager extends s.MongoClient {
                     verified: !1
                 });
                 // Sends verification
-                var n = {
+                var i = {
                     from: "arcausgame@gmail.com",
                     to: t,
                     subject: "Arcaus Game Verification",
                     text: `\n                        Welcome to Arcaus! Before you can login, we are going to need you to login.\n                        Please verify your account using the following link:\n                        http://localhost:3000/verify/${l}\n                        `
                 };
-                i.sendMail(n, (function(e, t) {
+                n.sendMail(i, (function(e, t) {
                     e && console.log(e);
                 })), r.status = "Error", r.message = "Account created! Welcome to the game! Please verify your account and try again", 
                 s(r);
@@ -251,6 +251,9 @@ class WorldManager {
         };
         return s.map = WorldManager.createMap(), worlds[a] = s, e.writeFileSync(`worlds/${a}.json`, t.serialize(s)), 
         s;
+    }
+    static saveWorld(a) {
+        e.writeFileSync(`worlds/${a}.json`, t.serialize(worlds[a]));
     }
     /**
      * Creates a map as a blank state for a world
@@ -411,7 +414,10 @@ class SocketSwitch {
                 id: e.id,
                 world: t.world
             }
-        }));
+        })), Socket.send(e, {
+            type: "setWorlds",
+            worlds
+        });
     }
     static sendMessage(e, t) {
         Socket.sendAll({
@@ -461,7 +467,7 @@ class SocketSwitch {
 /**
  * Website server
  * Mail server
- */ const n = l({
+ */ const i = l({
     port: process.argv[2] || 3e3,
     root: process.cwd() + "\\public",
     file: "index.html",
@@ -480,8 +486,14 @@ for (let a of e.readdirSync("worlds")) {
     worlds[a.substr(0, a.length - 5)] = s;
 }
 
-DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e => {
-    global.db = e, Messenger.login(n), Messenger.verify(n), d.on("connection", t => {
+setInterval(e => {
+    for (let e = 0; e < worlds.length; e++) WorldManager.saveWorld(worlds[e].name);
+    Socket.sendAll({
+        type: "chatMessage",
+        message: "[Announcement]: The game has been saved."
+    });
+}, 3e5), DatabaseManager.connectToDB("mongodb://localhost:27017/", "arcaus", "players", e => {
+    global.db = e, Messenger.login(i), Messenger.verify(i), d.on("connection", t => {
         t.id = DataGenerator.generateID(99999999999), t.onmessage = a => {
             switch ((a = JSON.parse(a.data)).type) {
               /**
