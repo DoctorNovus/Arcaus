@@ -34,21 +34,31 @@ export class SocketSwitch {
         let speed = Math.sqrt(((player.x + 5) - player.x) + ((player.y + 5) - player.y));
         switch (data.direction) {
             case "up":
-                player.y += speed;
+                if (!WorldManager.collidesWithTile(worlds[player.world], player.x, player.y + speed * 2.5)) {
+                    player.y += speed * 2.5;
+                }
                 break;
 
             case "down":
-                player.y -= speed;
+                if (!WorldManager.collidesWithTile(worlds[player.world], player.x, player.y - speed)) {
+                    player.y -= speed;
+                }
                 break;
 
             case "left":
-                player.x -= speed;
+                if (!WorldManager.collidesWithTile(worlds[player.world], player.x - speed, player.y)) {
+                    player.x -= speed;
+                }
                 break;
 
             case "right":
-                player.x += speed;
+                if (!WorldManager.collidesWithTile(worlds[player.world], player.x + speed, player.y)) {
+                    player.x += speed;
+                }
                 break;
         }
+
+        player.rect.setPosition(player.x, player.y);
 
         Socket.sendAll({
             type: "updatePlayer",
@@ -61,12 +71,108 @@ export class SocketSwitch {
     }
 
     static loadWorld(ws, data) {
+        try {
+            worlds[players[ws.id].world].count--;
+        } catch (err) {
+
+        }
+
         if (worlds[data.world]) {
-            players[ws.id].world = data.world;
+            if (Object.values(players).length > 0) {
+                players[ws.id].world = data.world;
+                worlds[data.world].count++;
+
+                let p = players[ws.id];
+                let minX = p.x - 8 * 96;
+                let maxX = p.x + 8 * 96;
+                let minY = p.y - 5 * 96;
+                let maxY = p.y + 5 * 96;
+                let map = worlds[p.world].map.map(sector => (sector.x > minX && sector.x < maxX) && (sector.y > minY && sector.y < maxY));
+
+                let newmap = [];
+                for (let i = 0; i < map.length; i++) {
+                    if (map[i] == true) {
+                        newmap.push(worlds[p.world].map[i]);
+                    }
+                }
+
+                let world = JSON.parse(JSON.stringify(worlds[p.world]));
+
+                world.map = newmap;
+
+                Socket.send(ws, {
+                    type: "setWorld",
+                    world: world
+                });
+            }
+
+        } else {
+            WorldManager.createWorld(data.world)
+            if (Object.values(players).length > 0) {
+                players[ws.id].world = data.world;
+                worlds[data.world].count++;
+
+                players[ws.id].world = data.world;
+                worlds[data.world].count++;
+
+                let p = players[ws.id];
+                let minX = p.x - 8 * 96;
+                let maxX = p.x + 8 * 96;
+                let minY = p.y - 5 * 96;
+                let maxY = p.y + 5 * 96;
+                let map = worlds[p.world].map.map(sector => (sector.x > minX && sector.x < maxX) && (sector.y > minY && sector.y < maxY));
+
+                let newmap = [];
+                for (let i = 0; i < map.length; i++) {
+                    if (map[i] == true) {
+                        newmap.push(worlds[p.world].map[i]);
+                    }
+                }
+
+                let world = JSON.parse(JSON.stringify(worlds[p.world]));
+
+                world.map = newmap;
+
+                Socket.send(ws, {
+                    type: "setWorld",
+                    world: world
+                });
+            }
+        }
+    }
+
+    static changeWorld(ws, data) {
+        if (worlds[data.world]) {
+            let p = players[ws.id];
+            p.x = worlds[data.world].map[worlds[data.world].map.length - 1].x;
+            p.y = worlds[data.world].map[worlds[data.world].map.length - 1].y + 96;
+            p.rect.x = p.x;
+            p.rect.y = p.y;
+
+            let minX = p.x - 8 * 96;
+            let maxX = p.x + 8 * 96;
+            let minY = p.y - 5 * 96;
+            let maxY = p.y + 5 * 96;
+            let map = worlds[data.world].map.map(sector => (sector.x > minX && sector.x < maxX) && (sector.y > minY && sector.y < maxY));
+            let newmap = [];
+            for (let i = 0; i < map.length; i++) {
+                if (map[i] == true) {
+                    newmap.push(worlds[data.world].map[i]);
+                }
+            }
 
             Socket.send(ws, {
                 type: "setWorld",
-                world: worlds[data.world]
+                world: newmap
+            });
+
+            Socket.send(ws, {
+                type: "updatePlayer",
+                player: {
+                    id: ws.id,
+                    x: p.x,
+                    y: p.y
+                }
             });
 
             Socket.sendAll({
@@ -76,14 +182,38 @@ export class SocketSwitch {
                     world: data.world
                 }
             });
-
         } else {
             WorldManager.createWorld(data.world)
-            players[ws.id].world = data.world;
+            let p = players[ws.id];
+            p.x = worlds[data.world].map[worlds[data.world].map.length - 1].x;
+            p.y = worlds[data.world].map[worlds[data.world].map.length - 1].y + 96;
+            p.rect.x = p.x;
+            p.rect.y = p.y;
+
+            let minX = p.x - 8 * 96;
+            let maxX = p.x + 8 * 96;
+            let minY = p.y - 5 * 96;
+            let maxY = p.y + 5 * 96;
+            let map = worlds[data.world].map.map(sector => (sector.x > minX && sector.x < maxX) && (sector.y > minY && sector.y < maxY));
+            let newmap = [];
+            for (let i = 0; i < map.length; i++) {
+                if (map[i] == true) {
+                    newmap.push(worlds[data.world].map[i]);
+                }
+            }
 
             Socket.send(ws, {
                 type: "setWorld",
-                world: worlds[data.world]
+                world: newmap
+            });
+
+            Socket.send(ws, {
+                type: "updatePlayer",
+                player: {
+                    id: ws.id,
+                    x: p.x,
+                    y: p.y
+                }
             });
 
             Socket.sendAll({
@@ -94,11 +224,6 @@ export class SocketSwitch {
                 }
             });
         }
-
-        Socket.send(ws, {
-            type: "setWorlds",
-            worlds: worlds
-        });
     }
 
     static sendMessage(ws, data) {
@@ -121,6 +246,7 @@ export class SocketSwitch {
         let player = players[ws.id];
         let x = (Math.floor(data.pos.x / 96) * 96);
         let y = (Math.floor(data.pos.y / 96) * 96);
+
         let tile = undefined;
 
         for (let i = 0; i < worlds[player.world].map.length; i++) {
@@ -146,19 +272,40 @@ export class SocketSwitch {
             }
         } else if (data.button == "right") {
             if (tile == undefined) {
-                worlds[player.world].map.push({
-                    tile: "cobble",
-                    type: "backdrop",
-                    x: x,
-                    y: y
-                });
+                if (!rect.overlaps(player.rect)) {
+                    worlds[player.world].map.push({
+                        tile: data.item,
+                        type: "backdrop",
+                        x: x,
+                        y: y
+                    });
+                }
             }
         }
 
-        Socket.sendAllInWorld(player.world, {
+        let p = players[ws.id];
+        let minX = p.x - 8 * 96;
+        let maxX = p.x + 8 * 96;
+        let minY = p.y - 5 * 96;
+        let maxY = p.y + 5 * 96;
+        let map = worlds[p.world].map.map(sector => (sector.x > minX && sector.x < maxX) && (sector.y > minY && sector.y < maxY));
+
+        let newmap = [];
+        for (let i = 0; i < map.length; i++) {
+            if (map[i] == true) {
+                newmap.push(worlds[p.world].map[i]);
+            }
+        }
+
+        let world = JSON.parse(JSON.stringify(worlds[p.world]));
+
+        world.map = newmap;
+
+        Socket.send(ws, {
             type: "setWorld",
-            world: worlds[player.world]
+            world: world
         });
+
     }
 
     static loadWorlds(ws) {

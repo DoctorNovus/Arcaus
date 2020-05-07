@@ -11,9 +11,7 @@ export class World extends Component {
         :host {
             display: flex;
             flex-direction: column;
-            background-color: black;
-            color: orange;
-            text-align: center;
+            color: black;
         }
         </style>
 
@@ -23,6 +21,6 @@ export class World extends Component {
     }
 
     joinWorld(e) {
-        window.joinGameWorld = this.innerText;
+        window.joinGameWorld = this.innerText.split(":")[0];
     }
 }

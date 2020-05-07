@@ -33,6 +33,8 @@ export class Socket extends WebSocket {
                         this.send({
                             type: "loadPlayers"
                         });
+
+                        game.connected = true;
                     };
                     break;
 
@@ -60,7 +62,7 @@ export class Socket extends WebSocket {
 
                 case "updatePlayer":
                     let player = game.players.find(p => p.id == data.player.id);
-                    if (data.player.x) {
+                    if (data.player.x || data.player.y) {
                         player.move(data.player.x, data.player.y);
                     }
 
@@ -83,11 +85,13 @@ export class Socket extends WebSocket {
                 case "setWorlds":
                     game.worlds = data.worlds;
                     let worlds = Object.values(data.worlds);
-                    let text = "";
+                    worlds.sort((a, b) => (a.count > b.count) ? -1 : 1);
+                    let text = "<ul>";
                     for (let i = 0; i < worlds.length; i++) {
                         let world = worlds[i];
-                        text += `<game-world>${world.name}</game-world>`
+                        text += `<li><game-world>${world.name}: ${world.count}</game-world></li>`
                     }
+                    text += "</ul>"
 
                     document.getElementById("worldMenu").state.worlds = `${text}`;
                     break;

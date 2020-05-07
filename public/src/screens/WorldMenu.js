@@ -3,7 +3,7 @@ import { Component } from "jolt";
 export class WorldMenu extends Component {
     constructor() {
         super();
-        this.state.worlds = [];
+        this.state.worlds = "";
     }
 
     render() {
@@ -13,7 +13,9 @@ export class WorldMenu extends Component {
             :host {
                 width: 100%;
                 height: 100%;
-                display: grid;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-around;
                 position: absolute;
                 top: 0px;
                 left: 0px;
@@ -40,6 +42,23 @@ export class WorldMenu extends Component {
                 position: absolute;
                 top: 5%;
                 left: 0%;
+                width: 100%;
+                height: auto;
+                overflow-x: hidden;
+                overflow-y: scroll;
+            }
+
+            ul {
+                display: flex;
+                flex-direction: row;
+                list-style-type: none;
+                flex-wrap: wrap;
+                justify-content: space-around;
+                text-align: left;
+            }
+
+            li {
+                flex: 1 0 11%
             }
         </style>
         <form @change="listWorlds" @submit="joinWorld">

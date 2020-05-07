@@ -27,6 +27,7 @@ export class SettingsMenu extends Component {
         </style>
 
         <button @click="exitWorld">Exit World</button>
+        <button @click="openInv">Open Inventory</button>
         <button @click="closeMenu">Close</button>
         `;
     }
@@ -41,6 +42,11 @@ export class SettingsMenu extends Component {
             document.getElementById("worldMenu").style.display = "flex";
             document.getElementById("chatBox").style.display = "none";
         }
+    }
+
+    openInv() {
+        document.getElementById("inventory").style.display = "flex";
+        document.getElementById("settingsMenu").style.display = "none";
     }
 
     closeMenu() {

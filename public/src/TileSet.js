@@ -10,6 +10,10 @@ export class TileSet {
             case "cobble":
                 data = TileSet.getCobble(pos);
                 break;
+
+            case "rock":
+                data = TileSet.getRock(pos);
+                break;
         }
 
         return data;
@@ -50,4 +54,23 @@ export class TileSet {
                 break;
         }
     }
+
+    static getRock(pos) {
+        switch (pos) {
+            case "top":
+                return {
+                    x: 64,
+                    y: 0
+                }
+                break;
+
+            case "core":
+                return {
+                    x: 64,
+                    y: 32
+                }
+                break;
+        }
+    }
+
 }

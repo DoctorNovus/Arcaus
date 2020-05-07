@@ -9,6 +9,7 @@ import { SocketSwitch } from "./scripts/SocketSwitch";
 import { DataGenerator } from "./scripts/DataGenerator";
 import Server from "jolt-server";
 import { WorldManager } from "./scripts/WorldManager";
+import { PlayerManager } from "./scripts/PlayerManager";
 
 /**
  * Website server
@@ -33,6 +34,7 @@ global.worlds = {};
 // Loads our worlds
 for (let worldName of fs.readdirSync("worlds")) {
     let world = BSON.deserialize(fs.readFileSync(`worlds/${worldName}`), "utf-8")
+    world.count = 0;
     worlds[worldName.substr(0, worldName.length - 5)] = world;
 }
 
@@ -55,6 +57,9 @@ DatabaseManager.connectToDB(url, "arcaus", "players", db => {
 
     socket.on("connection", ws => {
         ws.id = DataGenerator.generateID(99999999999);
+        setInterval(_ => {
+            PlayerManager.applyGravity(ws);
+        }, 10);
         ws.onmessage = (data) => {
             data = JSON.parse(data.data);
             switch (data.type) {
@@ -111,6 +116,10 @@ DatabaseManager.connectToDB(url, "arcaus", "players", db => {
 
                 case "getWorlds":
                     SocketSwitch.loadWorlds(ws);
+                    break;
+
+                case "changeWorld":
+                    SocketSwitch.changeWorld(ws, data);
                     break;
             }
         };

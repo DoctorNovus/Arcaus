@@ -1,4 +1,4 @@
-import { Screen, Renderable, Keyboard, Mouse } from "@outwalk/skylark";
+import { Screen, Keyboard, Mouse } from "@outwalk/skylark";
 import { Socket } from "./Socket";
 import { GameManager } from "./GameManager";
 import { Keybinds } from "./Keybinds";
@@ -11,6 +11,9 @@ export class Game extends Screen {
         super();
         window.joinGameWorld = "";
         window.messageToBeSent = "";
+        window.ItemInHand = "dirt";
+
+        document.getElementById("iB").style.display = "flex";
 
         this.game = {
             animations: {},
@@ -18,7 +21,9 @@ export class Game extends Screen {
             id: 1,
             materials: {},
             players: [],
-            textureRegion: {}
+            textureRegion: {},
+            currentWorld: "start",
+            connected: false
         };
 
         this.ws = new Socket(url, email, password);
@@ -38,11 +43,20 @@ export class Game extends Screen {
     update() {
         if (joinGameWorld != "") {
             this.ws.send({
-                type: "loadWorld",
+                type: "changeWorld",
                 world: joinGameWorld
             });
 
+            this.game.currentWorld = joinGameWorld;
+
             joinGameWorld = "";
+        }
+
+        if (this.game.currentWorld && this.game.connected) {
+            this.ws.send({
+                type: "loadWorld",
+                world: this.game.currentWorld
+            });
         }
 
         if (messageToBeSent != "") {
@@ -68,6 +82,7 @@ export class Game extends Screen {
     render() {
         this.game.display.clear();
         if (this.game.world) {
+            console.log(this.game.world);
             for (let i in this.game.world.map) {
                 let tile = this.game.world.map[i];
                 let area = Mapper.getSurrounding(this.game, tile.x, tile.y, 96, 96);
@@ -81,6 +96,7 @@ export class Game extends Screen {
                     tile.type,
                     this.game.train
                 );
+
                 sector.draw(this.game.camera);
             }
         }

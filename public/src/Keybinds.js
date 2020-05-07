@@ -48,7 +48,8 @@ export class Keybinds {
                 pos: {
                     x: pos.x,
                     y: pos.y
-                }
+                },
+                item: ItemInHand
             })
         }
 
@@ -59,7 +60,8 @@ export class Keybinds {
                 pos: {
                     x: pos.x,
                     y: pos.y
-                }
+                },
+                item: ItemInHand
             })
         }
     }
